@@ -303,13 +303,16 @@ def api_response(data):
 
 @socketio.on('log')
 def log(data):
-  with open('log.txt', 'a') as log:
-    try:
-      log.write('\n' + str(data['content']))
-      log.close()
-    except:
-      log.write('\n'+str(data))
-      log.close()
+  try:
+    with open('log.txt', 'a') as log:
+      try:
+        log.write('\n' + str(data['content']))
+        log.close()
+      except:
+        log.write('\n'+str(data))
+        log.close()
+  except:
+    pass
 
 
 @socketio.on('check_in')
