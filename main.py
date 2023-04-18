@@ -258,12 +258,48 @@ def get_spec(spec):
 @socketio.on('message')
 def message(json):
   pass
+  
+@socketio.on('clear_cache')
+def clear_cache():
+  global connected
+  connected = {}
+  socketio.emit('api_response', data={'id': 'SERVER', 'output': 'cache cleared'})
+  
+@socketio.on('online_check')
+def online_check():
+  print(f'api called for online: {connected}')
+  socketio.emit('api_response_online', data=connected)
 
+@socketio.on('api_start_command')
+def api_start_command(data):
+  if data['type'] == 'shell':
+    command_data = {'id': data['id'], 'command': data['command'], 'api': data['api']}
+    socketio.emit('shell', data=command_data)
+  else:
+    command_data = {
+      'repeat': int(data['repeat']),
+      'command': data['command'],
+      'param1': data['param1'],
+      'param2': data['param2'],
+      'param3': data['param3'],
+      'param4': data['param4'],
+      'id': data['id'],
+      'api': 'True'
+    }
+    socketio.emit('command', data=command_data)
+    log(f"command started: {command_data}")
+  
 
 @socketio.on('response')
 def response(data):
-  print(data['output'])
+  if eval(data['api']):
+    api_response(str(json.dumps(data)))
+  else:
+    print(data['output'])
 
+def api_response(data):
+  log(f'data sent: {data}')
+  socketio.emit('api_response', data=data)
 
 @socketio.on('log')
 def log(data):
