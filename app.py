@@ -331,4 +331,4 @@ def get_clients():
   # convert the dictionary keys to a list and return it
   return {'clients': list(clients)}
 
-socketio.run(app, host='0.0.0.0', port=8080)
+socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)
