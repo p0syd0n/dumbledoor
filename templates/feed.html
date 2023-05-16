@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Live Feed</title>
+  </head>
+  <body>
+    <h1 id = "title">Live Feed for </h1>
+    <img id="live-feed" src="" alt="Live Feed" />
+
+    <script>
+      // Update the live feed image source every 1000 milliseconds
+      // Get the current URL
+      const currentUrl = window.location.href;
+      
+      // Parse the URL and extract the query parameters
+      var query_string_paramter = currentUrl.split("?")[1]; 
+      let idParam = query_string_paramter.split("=")[1];
+      let title = document.getElementById("title").innerHTML = `Live Feed for ${idParam}`
+      setInterval(function () {
+        const img = document.getElementById("live-feed");
+        img.src = "/live-feed?id="+idParam+"&cachePrev=" + new Date().getTime(); // Append timestamp to URL to prevent caching
+        //alert("/live-feed?id="+idParam+"&cachePrev=" + new Date().getTime())
+      }, 1000);
+    </script>
+  </body>
+</html>
