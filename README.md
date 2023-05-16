@@ -1,6 +1,8 @@
 # dumbledoor
 RAT c2c server
 
+currently snape version 1.3
+
 Dumbledoor is a RAT written in python. It uses Flask-socketio to communicate to connected clients and give them commands. This project was created as a better vesrion of Dobby. 
 
 I suggest hosting the server on replit, because it is free and easy to set up. Remember to change the MAIN_SERVER and STORAGE_SERVER constants in the client code, which can be found here: https://github.com/p0syd0n/snape .
