@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Live Feed</title>
+  </head>
+  <body>
+    <h1>test page</h1>
+    <script>
+      // Update the live feed image source every 1000 milliseconds
+      // Get the current URL
+      const currentUrl = window.location.href;
+      
+      // Parse the URL and extract the query parameters
+      var query_string_paramter = currentUrl.split("?")[1]; 
+      let idParam = query_string_paramter.split("=")[1];
+      
+      document.write(idParam)
+    </script>
+  </body>
+</html>
